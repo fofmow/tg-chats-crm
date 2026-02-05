@@ -27,34 +27,35 @@ class ExcelService:
     CENTER_ALIGN = Alignment(horizontal="center", vertical="center")
     
     @classmethod
-    def generate_7_days_report(
+    def generate_period_report(
         cls,
         incoming: list[PaymentIn],
         outgoing: list[PaymentOut],
+        period_name: str = "Report",
     ) -> io.BytesIO:
-        """Generate comprehensive Excel report for the last 7 days."""
+        """Generate comprehensive Excel report for a given period."""
         wb = Workbook()
         
         # Remove default sheet
         wb.remove(wb.active)
         
         # Create sheets
-        ws_summary = wb.create_sheet("Сводка", 0)
-        cls._write_comprehensive_summary(ws_summary, incoming, outgoing)
+        ws_summary = wb.create_sheet("Summary", 0)
+        cls._write_comprehensive_summary(ws_summary, incoming, outgoing, period_name)
         
-        ws_daily = wb.create_sheet("По дням")
+        ws_daily = wb.create_sheet("By Day")
         cls._write_daily_breakdown(ws_daily, incoming, outgoing)
         
-        ws_in = wb.create_sheet("Входящие платежи")
+        ws_in = wb.create_sheet("Incoming Payments")
         cls._write_incoming_sheet(ws_in, incoming)
         
-        ws_out = wb.create_sheet("Исходящие платежи")
+        ws_out = wb.create_sheet("Outgoing Payments")
         cls._write_outgoing_sheet(ws_out, outgoing)
         
-        ws_teachers = wb.create_sheet("По преподавателям")
+        ws_teachers = wb.create_sheet("By Teacher")
         cls._write_teachers_breakdown(ws_teachers, incoming)
         
-        ws_categories = wb.create_sheet("По категориям")
+        ws_categories = wb.create_sheet("By Category")
         cls._write_categories_breakdown(ws_categories, outgoing)
         
         # Save to bytes
@@ -64,12 +65,23 @@ class ExcelService:
         
         return output
     
+    # Keep old method name for backward compatibility
+    @classmethod
+    def generate_7_days_report(
+        cls,
+        incoming: list[PaymentIn],
+        outgoing: list[PaymentOut],
+    ) -> io.BytesIO:
+        """Generate comprehensive Excel report for the last 7 days."""
+        return cls.generate_period_report(incoming, outgoing, period_name="Last 7 Days")
+    
     @classmethod
     def _write_comprehensive_summary(
         cls,
         ws,
         incoming: list[PaymentIn],
         outgoing: list[PaymentOut],
+        period_name: str = "Report",
     ):
         """Write comprehensive summary sheet."""
         total_in = sum(p.amount for p in incoming)
@@ -77,58 +89,62 @@ class ExcelService:
         balance = total_in - total_out
         
         # Title
-        ws.cell(row=1, column=1, value="ФИНАНСОВЫЙ ОТЧЕТ ЗА ПОСЛЕДНИЕ 7 ДНЕЙ")
+        ws.cell(row=1, column=1, value=f"FINANCIAL REPORT: {period_name.upper()}")
         ws.cell(row=1, column=1).font = Font(bold=True, size=16)
         ws.merge_cells("A1:D1")
         
-        # Period
-        end_date = date.today()
-        start_date = end_date - timedelta(days=7)
-        ws.cell(row=2, column=1, value=f"Период: {start_date.strftime('%d.%m.%Y')} - {end_date.strftime('%d.%m.%Y')}")
+        # Period info
+        if incoming or outgoing:
+            all_dates = [p.date for p in incoming] + [p.date for p in outgoing]
+            start_date = min(all_dates) if all_dates else date.today()
+            end_date = max(all_dates) if all_dates else date.today()
+            ws.cell(row=2, column=1, value=f"Period: {start_date.strftime('%d.%m.%Y')} - {end_date.strftime('%d.%m.%Y')}")
+        else:
+            ws.cell(row=2, column=1, value="Period: No data")
         ws.merge_cells("A2:D2")
         
-        ws.cell(row=3, column=1, value=f"Дата формирования: {end_date.strftime('%d.%m.%Y')}")
+        ws.cell(row=3, column=1, value=f"Generated: {date.today().strftime('%d.%m.%Y')}")
         ws.merge_cells("A3:D3")
         
         row = 5
         
         # Main metrics
-        ws.cell(row=row, column=1, value="ОСНОВНЫЕ ПОКАЗАТЕЛИ")
+        ws.cell(row=row, column=1, value="KEY METRICS")
         ws.cell(row=row, column=1).font = Font(bold=True, size=12)
         ws.merge_cells(f"A{row}:D{row}")
         row += 1
         
         # Incoming section
-        ws.cell(row=row, column=1, value="ВХОДЯЩИЕ ПЛАТЕЖИ (ДЕБИТ)")
+        ws.cell(row=row, column=1, value="INCOMING PAYMENTS (DEBIT)")
         ws.cell(row=row, column=1).font = Font(bold=True)
         ws.cell(row=row, column=1).fill = cls.SUCCESS_FILL
         ws.merge_cells(f"A{row}:B{row}")
         row += 1
         
-        ws.cell(row=row, column=1, value="Общая сумма:")
+        ws.cell(row=row, column=1, value="Total Amount:")
         ws.cell(row=row, column=2, value=total_in)
         ws.cell(row=row, column=2).number_format = '#,##0.00'
         row += 1
         
-        ws.cell(row=row, column=1, value="Количество транзакций:")
+        ws.cell(row=row, column=1, value="Transaction Count:")
         ws.cell(row=row, column=2, value=len(incoming))
         row += 1
         
         if incoming:
             avg_in = total_in / len(incoming)
-            ws.cell(row=row, column=1, value="Средний чек:")
+            ws.cell(row=row, column=1, value="Average Payment:")
             ws.cell(row=row, column=2, value=avg_in)
             ws.cell(row=row, column=2).number_format = '#,##0.00'
             row += 1
             
             max_in = max(p.amount for p in incoming)
             min_in = min(p.amount for p in incoming)
-            ws.cell(row=row, column=1, value="Макс. платеж:")
+            ws.cell(row=row, column=1, value="Max Payment:")
             ws.cell(row=row, column=2, value=max_in)
             ws.cell(row=row, column=2).number_format = '#,##0.00'
             row += 1
             
-            ws.cell(row=row, column=1, value="Мин. платеж:")
+            ws.cell(row=row, column=1, value="Min Payment:")
             ws.cell(row=row, column=2, value=min_in)
             ws.cell(row=row, column=2).number_format = '#,##0.00'
             row += 1
@@ -136,46 +152,46 @@ class ExcelService:
             # By chat type
             ru_payments = [p for p in incoming if p.chat_type == "ru"]
             eng_payments = [p for p in incoming if p.chat_type == "eng"]
-            ws.cell(row=row, column=1, value="Из RU чата:")
-            ws.cell(row=row, column=2, value=f"{len(ru_payments)} шт. на {sum(p.amount for p in ru_payments):,.2f}")
+            ws.cell(row=row, column=1, value="From RU chat:")
+            ws.cell(row=row, column=2, value=f"{len(ru_payments)} pcs. for {sum(p.amount for p in ru_payments):,.2f}")
             row += 1
-            ws.cell(row=row, column=1, value="Из ENG чата:")
-            ws.cell(row=row, column=2, value=f"{len(eng_payments)} шт. на {sum(p.amount for p in eng_payments):,.2f}")
+            ws.cell(row=row, column=1, value="From ENG chat:")
+            ws.cell(row=row, column=2, value=f"{len(eng_payments)} pcs. for {sum(p.amount for p in eng_payments):,.2f}")
             row += 1
         
         row += 1
         
         # Outgoing section
-        ws.cell(row=row, column=1, value="ИСХОДЯЩИЕ ПЛАТЕЖИ (КРЕДИТ)")
+        ws.cell(row=row, column=1, value="OUTGOING PAYMENTS (CREDIT)")
         ws.cell(row=row, column=1).font = Font(bold=True)
         ws.cell(row=row, column=1).fill = cls.WARNING_FILL
         ws.merge_cells(f"A{row}:B{row}")
         row += 1
         
-        ws.cell(row=row, column=1, value="Общая сумма:")
+        ws.cell(row=row, column=1, value="Total Amount:")
         ws.cell(row=row, column=2, value=total_out)
         ws.cell(row=row, column=2).number_format = '#,##0.00'
         row += 1
         
-        ws.cell(row=row, column=1, value="Количество транзакций:")
+        ws.cell(row=row, column=1, value="Transaction Count:")
         ws.cell(row=row, column=2, value=len(outgoing))
         row += 1
         
         if outgoing:
             avg_out = total_out / len(outgoing)
-            ws.cell(row=row, column=1, value="Средний платеж:")
+            ws.cell(row=row, column=1, value="Average Payment:")
             ws.cell(row=row, column=2, value=avg_out)
             ws.cell(row=row, column=2).number_format = '#,##0.00'
             row += 1
             
             max_out = max(p.amount for p in outgoing)
             min_out = min(p.amount for p in outgoing)
-            ws.cell(row=row, column=1, value="Макс. платеж:")
+            ws.cell(row=row, column=1, value="Max Payment:")
             ws.cell(row=row, column=2, value=max_out)
             ws.cell(row=row, column=2).number_format = '#,##0.00'
             row += 1
             
-            ws.cell(row=row, column=1, value="Мин. платеж:")
+            ws.cell(row=row, column=1, value="Min Payment:")
             ws.cell(row=row, column=2, value=min_out)
             ws.cell(row=row, column=2).number_format = '#,##0.00'
             row += 1
@@ -183,7 +199,7 @@ class ExcelService:
         row += 1
         
         # Balance
-        ws.cell(row=row, column=1, value="ИТОГОВЫЙ БАЛАНС")
+        ws.cell(row=row, column=1, value="TOTAL BALANCE")
         ws.cell(row=row, column=1).font = Font(bold=True, size=12)
         ws.cell(row=row, column=2, value=balance)
         ws.cell(row=row, column=2).font = Font(bold=True, size=12)
@@ -204,8 +220,8 @@ class ExcelService:
         outgoing: list[PaymentOut],
     ):
         """Write daily breakdown sheet."""
-        headers = ["Дата", "Входящие (кол-во)", "Входящие (сумма)", 
-                   "Исходящие (кол-во)", "Исходящие (сумма)", "Баланс дня"]
+        headers = ["Date", "Incoming (count)", "Incoming (amount)", 
+                   "Outgoing (count)", "Outgoing (amount)", "Day Balance"]
         cls._write_headers(ws, headers)
         
         # Group by date
@@ -258,7 +274,7 @@ class ExcelService:
         
         # Total row
         row += 1
-        ws.cell(row=row, column=1, value="ИТОГО").font = Font(bold=True)
+        ws.cell(row=row, column=1, value="TOTAL").font = Font(bold=True)
         ws.cell(row=row, column=2, value=len(incoming)).font = Font(bold=True)
         ws.cell(row=row, column=3, value=total_in).font = Font(bold=True)
         ws.cell(row=row, column=3).number_format = '#,##0.00'
@@ -276,11 +292,11 @@ class ExcelService:
     @classmethod
     def _write_teachers_breakdown(cls, ws, incoming: list[PaymentIn]):
         """Write breakdown by teacher."""
-        headers = ["Преподаватель", "Количество", "Сумма", "Средний чек", "% от общего"]
+        headers = ["Teacher", "Count", "Amount", "Average", "% of Total"]
         cls._write_headers(ws, headers)
         
         if not incoming:
-            ws.cell(row=2, column=1, value="Нет данных")
+            ws.cell(row=2, column=1, value="No data")
             return
         
         # Group by teacher
@@ -314,7 +330,7 @@ class ExcelService:
         
         # Total
         row += 1
-        ws.cell(row=row, column=1, value="ИТОГО").font = Font(bold=True)
+        ws.cell(row=row, column=1, value="TOTAL").font = Font(bold=True)
         ws.cell(row=row, column=2, value=len(incoming)).font = Font(bold=True)
         ws.cell(row=row, column=3, value=total_amount).font = Font(bold=True)
         ws.cell(row=row, column=3).number_format = '#,##0.00'
@@ -326,11 +342,11 @@ class ExcelService:
     @classmethod
     def _write_categories_breakdown(cls, ws, outgoing: list[PaymentOut]):
         """Write breakdown by category."""
-        headers = ["Категория", "Количество", "Сумма", "Средний платеж", "% от общего"]
+        headers = ["Category", "Count", "Amount", "Average", "% of Total"]
         cls._write_headers(ws, headers)
         
         if not outgoing:
-            ws.cell(row=2, column=1, value="Нет данных")
+            ws.cell(row=2, column=1, value="No data")
             return
         
         # Group by category
@@ -364,7 +380,7 @@ class ExcelService:
         
         # Total
         row += 1
-        ws.cell(row=row, column=1, value="ИТОГО").font = Font(bold=True)
+        ws.cell(row=row, column=1, value="TOTAL").font = Font(bold=True)
         ws.cell(row=row, column=2, value=len(outgoing)).font = Font(bold=True)
         ws.cell(row=row, column=3, value=total_amount).font = Font(bold=True)
         ws.cell(row=row, column=3).number_format = '#,##0.00'
@@ -376,7 +392,7 @@ class ExcelService:
     @classmethod
     def _write_incoming_sheet(cls, ws, payments: list[PaymentIn]):
         """Write incoming payments to worksheet."""
-        headers = ["№", "Дата", "Сумма", "Клиент", "Преподаватель", "Чат", "Добавлено"]
+        headers = ["#", "Date", "Amount", "Client", "Teacher", "Chat", "Added"]
         cls._write_headers(ws, headers)
         
         for i, payment in enumerate(payments, start=2):
@@ -392,7 +408,7 @@ class ExcelService:
         # Add total row
         if payments:
             total_row = len(payments) + 2
-            ws.cell(row=total_row, column=2, value="ИТОГО:").font = Font(bold=True)
+            ws.cell(row=total_row, column=2, value="TOTAL:").font = Font(bold=True)
             ws.cell(row=total_row, column=3, value=sum(p.amount for p in payments)).font = Font(bold=True)
             ws.cell(row=total_row, column=3).number_format = '#,##0.00'
         
@@ -401,7 +417,7 @@ class ExcelService:
     @classmethod
     def _write_outgoing_sheet(cls, ws, payments: list[PaymentOut]):
         """Write outgoing payments to worksheet."""
-        headers = ["№", "Дата", "Сумма", "Категория", "Получатель", "Добавлено"]
+        headers = ["#", "Date", "Amount", "Category", "Recipient", "Added"]
         cls._write_headers(ws, headers)
         
         for i, payment in enumerate(payments, start=2):
@@ -416,7 +432,7 @@ class ExcelService:
         # Add total row
         if payments:
             total_row = len(payments) + 2
-            ws.cell(row=total_row, column=2, value="ИТОГО:").font = Font(bold=True)
+            ws.cell(row=total_row, column=2, value="TOTAL:").font = Font(bold=True)
             ws.cell(row=total_row, column=3, value=sum(p.amount for p in payments)).font = Font(bold=True)
             ws.cell(row=total_row, column=3).number_format = '#,##0.00'
         
@@ -436,16 +452,16 @@ class ExcelService:
     def _adjust_column_widths(cls, ws, headers: list[str]):
         """Adjust column widths based on content."""
         min_widths = {
-            "№": 5,
-            "Дата": 12,
-            "Сумма": 15,
-            "Клиент": 20,
-            "Преподаватель": 20,
-            "Чат": 8,
-            "Тип чата": 12,
-            "Категория": 20,
-            "Получатель": 20,
-            "Добавлено": 16,
+            "#": 5,
+            "Date": 12,
+            "Amount": 15,
+            "Client": 20,
+            "Teacher": 20,
+            "Chat": 8,
+            "Chat Type": 12,
+            "Category": 20,
+            "Recipient": 20,
+            "Added": 16,
         }
         
         for col, header in enumerate(headers, start=1):

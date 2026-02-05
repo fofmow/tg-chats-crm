@@ -59,16 +59,16 @@ def parse_amount(amount_str: str) -> float | None:
 def parse_payin_message(text: str) -> ParseResult:
     """
     Parse pay-in message format:
-    дата: 01.02.2026
-    сумма: 5000
-    клиент: Иванов
-    преподаватель: Петров
+    date: 01.02.2026
+    amount: 5000
+    client: Ivanov
+    teacher: Petrov
     """
     patterns = {
-        "date": (r"(?:дата|date)\s*[:\-]\s*(.+)", "дата"),
-        "amount": (r"(?:сумма|amount|sum)\s*[:\-]\s*(.+)", "сумма"),
-        "client": (r"(?:клиент|client)\s*[:\-]\s*(.+)", "клиент"),
-        "teacher": (r"(?:преподаватель|teacher|препод)\s*[:\-]\s*(.+)", "преподаватель"),
+        "date": (r"(?:дата|date)\s*[:\-]\s*(.+)", "date"),
+        "amount": (r"(?:сумма|amount|sum)\s*[:\-]\s*(.+)", "amount"),
+        "client": (r"(?:клиент|client)\s*[:\-]\s*(.+)", "client"),
+        "teacher": (r"(?:преподаватель|teacher|препод|to)\s*[:\-]\s*(.+)", "teacher"),
     }
     
     result = {}
@@ -86,7 +86,7 @@ def parse_payin_message(text: str) -> ParseResult:
     if missing_fields:
         return ParseResult(
             success=False,
-            error=f"❌ Не найдены поля: {', '.join(missing_fields)}"
+            error=f"❌ Missing fields: {', '.join(missing_fields)}"
         )
     
     # Validate date
@@ -94,7 +94,7 @@ def parse_payin_message(text: str) -> ParseResult:
     if not parsed_date:
         return ParseResult(
             success=False,
-            error=f"❌ Неверный формат даты: {result['date']}\nОжидается: ДД.ММ.ГГГГ"
+            error=f"❌ Invalid date format: {result['date']}\nExpected: DD.MM.YYYY"
         )
     
     # Validate amount
@@ -102,7 +102,7 @@ def parse_payin_message(text: str) -> ParseResult:
     if not parsed_amount:
         return ParseResult(
             success=False,
-            error=f"❌ Неверный формат суммы: {result['amount']}"
+            error=f"❌ Invalid amount format: {result['amount']}"
         )
     
     # Get original case values
@@ -126,16 +126,16 @@ def parse_payin_message(text: str) -> ParseResult:
 def parse_payout_message(text: str) -> ParseResult:
     """
     Parse pay-out message format:
-    Дата: 01.02.2026
-    Сумма: 3000
-    Категория: Зарплата
-    Кому: Сидоров
+    date: 01.02.2026
+    amount: 3000
+    category: Salary
+    to: Sidorov
     """
     patterns = {
-        "date": (r"(?:дата|date)\s*[:\-]\s*(.+)", "дата"),
-        "amount": (r"(?:сумма|amount|sum)\s*[:\-]\s*(.+)", "сумма"),
-        "category": (r"(?:категория|category)\s*[:\-]\s*(.+)", "категория"),
-        "recipient": (r"(?:кому|recipient|to)\s*[:\-]\s*(.+)", "кому"),
+        "date": (r"(?:дата|date)\s*[:\-]\s*(.+)", "date"),
+        "amount": (r"(?:сумма|amount|sum)\s*[:\-]\s*(.+)", "amount"),
+        "category": (r"(?:категория|category)\s*[:\-]\s*(.+)", "category"),
+        "recipient": (r"(?:кому|recipient|to)\s*[:\-]\s*(.+)", "recipient/to"),
     }
     
     result = {}
@@ -153,7 +153,7 @@ def parse_payout_message(text: str) -> ParseResult:
     if missing_fields:
         return ParseResult(
             success=False,
-            error=f"❌ Не найдены поля: {', '.join(missing_fields)}"
+            error=f"❌ Missing fields: {', '.join(missing_fields)}"
         )
     
     # Validate date
@@ -161,7 +161,7 @@ def parse_payout_message(text: str) -> ParseResult:
     if not parsed_date:
         return ParseResult(
             success=False,
-            error=f"❌ Неверный формат даты: {result['date']}\nОжидается: ДД.ММ.ГГГГ"
+            error=f"❌ Invalid date format: {result['date']}\nExpected: DD.MM.YYYY"
         )
     
     # Validate amount
@@ -169,7 +169,7 @@ def parse_payout_message(text: str) -> ParseResult:
     if not parsed_amount:
         return ParseResult(
             success=False,
-            error=f"❌ Неверный формат суммы: {result['amount']}"
+            error=f"❌ Invalid amount format: {result['amount']}"
         )
     
     # Get original case values
@@ -196,7 +196,7 @@ def looks_like_payment_message(text: str) -> bool:
         r"(?:дата|date)\s*[:\-]",
         r"(?:сумма|amount|sum)\s*[:\-]",
         r"(?:клиент|client)\s*[:\-]",
-        r"(?:преподаватель|teacher|препод)\s*[:\-]",
+        r"(?:преподаватель|teacher|to)\s*[:\-]",
         r"(?:категория|category)\s*[:\-]",
         r"(?:кому|recipient|to)\s*[:\-]",
     ]

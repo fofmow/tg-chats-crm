@@ -68,6 +68,59 @@ class PaymentInCRUD:
         )
         return list(result.scalars().all())
 
+    @staticmethod
+    async def get_by_date_range(
+        session: AsyncSession,
+        start_date: date,
+        end_date: date,
+    ) -> list[PaymentIn]:
+        """Get all incoming payments within a date range."""
+        result = await session.execute(
+            select(PaymentIn)
+            .where(PaymentIn.date >= start_date)
+            .where(PaymentIn.date <= end_date)
+            .order_by(PaymentIn.date.desc(), PaymentIn.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_current_month(session: AsyncSession) -> list[PaymentIn]:
+        """Get all incoming payments for the current month."""
+        today = date.today()
+        start_date = date(today.year, today.month, 1)
+        result = await session.execute(
+            select(PaymentIn)
+            .where(PaymentIn.date >= start_date)
+            .where(PaymentIn.date <= today)
+            .order_by(PaymentIn.date.desc(), PaymentIn.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_previous_month(session: AsyncSession) -> list[PaymentIn]:
+        """Get all incoming payments for the previous month."""
+        today = date.today()
+        # Calculate previous month start and end
+        if today.month == 1:
+            prev_month_start = date(today.year - 1, 12, 1)
+            prev_month_end = date(today.year - 1, 12, 31)
+        else:
+            prev_month_start = date(today.year, today.month - 1, 1)
+            # Calculate last day of previous month
+            if today.month == 1:
+                prev_month_end = date(today.year - 1, 12, 31)
+            else:
+                # First day of current month minus 1 day
+                prev_month_end = date(today.year, today.month, 1) - timedelta(days=1)
+        
+        result = await session.execute(
+            select(PaymentIn)
+            .where(PaymentIn.date >= prev_month_start)
+            .where(PaymentIn.date <= prev_month_end)
+            .order_by(PaymentIn.date.desc(), PaymentIn.created_at.desc())
+        )
+        return list(result.scalars().all())
+
 
 class PaymentOutCRUD:
     """CRUD operations for PaymentOut."""
@@ -125,6 +178,59 @@ class PaymentOutCRUD:
         result = await session.execute(
             select(PaymentOut)
             .where(PaymentOut.date >= week_ago)
+            .order_by(PaymentOut.date.desc(), PaymentOut.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_by_date_range(
+        session: AsyncSession,
+        start_date: date,
+        end_date: date,
+    ) -> list[PaymentOut]:
+        """Get all outgoing payments within a date range."""
+        result = await session.execute(
+            select(PaymentOut)
+            .where(PaymentOut.date >= start_date)
+            .where(PaymentOut.date <= end_date)
+            .order_by(PaymentOut.date.desc(), PaymentOut.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_current_month(session: AsyncSession) -> list[PaymentOut]:
+        """Get all outgoing payments for the current month."""
+        today = date.today()
+        start_date = date(today.year, today.month, 1)
+        result = await session.execute(
+            select(PaymentOut)
+            .where(PaymentOut.date >= start_date)
+            .where(PaymentOut.date <= today)
+            .order_by(PaymentOut.date.desc(), PaymentOut.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_previous_month(session: AsyncSession) -> list[PaymentOut]:
+        """Get all outgoing payments for the previous month."""
+        today = date.today()
+        # Calculate previous month start and end
+        if today.month == 1:
+            prev_month_start = date(today.year - 1, 12, 1)
+            prev_month_end = date(today.year - 1, 12, 31)
+        else:
+            prev_month_start = date(today.year, today.month - 1, 1)
+            # Calculate last day of previous month
+            if today.month == 1:
+                prev_month_end = date(today.year - 1, 12, 31)
+            else:
+                # First day of current month minus 1 day
+                prev_month_end = date(today.year, today.month, 1) - timedelta(days=1)
+        
+        result = await session.execute(
+            select(PaymentOut)
+            .where(PaymentOut.date >= prev_month_start)
+            .where(PaymentOut.date <= prev_month_end)
             .order_by(PaymentOut.date.desc(), PaymentOut.created_at.desc())
         )
         return list(result.scalars().all())

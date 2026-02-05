@@ -80,3 +80,23 @@ class ReportsService:
     async def get_last_7_days_outgoing(session: AsyncSession) -> list[PaymentOut]:
         """Get outgoing payments for the last 7 days."""
         return await PaymentOutCRUD.get_last_7_days(session)
+    
+    @staticmethod
+    async def get_current_month_incoming(session: AsyncSession) -> list[PaymentIn]:
+        """Get incoming payments for the current month."""
+        return await PaymentInCRUD.get_current_month(session)
+    
+    @staticmethod
+    async def get_current_month_outgoing(session: AsyncSession) -> list[PaymentOut]:
+        """Get outgoing payments for the current month."""
+        return await PaymentOutCRUD.get_current_month(session)
+    
+    @staticmethod
+    async def get_previous_month_incoming(session: AsyncSession) -> list[PaymentIn]:
+        """Get incoming payments for the previous month."""
+        return await PaymentInCRUD.get_previous_month(session)
+    
+    @staticmethod
+    async def get_previous_month_outgoing(session: AsyncSession) -> list[PaymentOut]:
+        """Get outgoing payments for the previous month."""
+        return await PaymentOutCRUD.get_previous_month(session)
