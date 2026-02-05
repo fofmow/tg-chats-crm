@@ -68,7 +68,7 @@ def parse_payin_message(text: str) -> ParseResult:
         "date": (r"(?:дата|date)\s*[:\-]\s*(.+)", "date"),
         "amount": (r"(?:сумма|amount|sum)\s*[:\-]\s*(.+)", "amount"),
         "client": (r"(?:клиент|client)\s*[:\-]\s*(.+)", "client"),
-        "teacher": (r"(?:преподаватель|teacher|препод|to)\s*[:\-]\s*(.+)", "teacher"),
+        "to": (r"(?:преподаватель|teacher|to)\s*[:\-]\s*(.+)", "to"),
     }
     
     result = {}
