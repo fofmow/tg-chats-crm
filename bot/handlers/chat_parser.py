@@ -135,7 +135,7 @@ def parse_payout_message(text: str) -> ParseResult:
         "date": (r"(?:дата|date)\s*[:\-]\s*(.+)", "date"),
         "amount": (r"(?:сумма|amount|sum)\s*[:\-]\s*(.+)", "amount"),
         "category": (r"(?:категория|category)\s*[:\-]\s*(.+)", "category"),
-        "recipient": (r"(?:кому|recipient|to)\s*[:\-]\s*(.+)", "recipient/to"),
+        "to": (r"(?:кому|to)\s*[:\-]\s*(.+)", "to"),
     }
     
     result = {}
