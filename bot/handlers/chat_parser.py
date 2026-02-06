@@ -118,7 +118,7 @@ def parse_payin_message(text: str) -> ParseResult:
             "date": parsed_date,
             "amount": parsed_amount,
             "client": result["client"],
-            "teacher": result["teacher"],
+            "teacher": result["to"],
         }
     )
 
