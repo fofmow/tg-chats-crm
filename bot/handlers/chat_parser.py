@@ -106,7 +106,7 @@ def parse_payin_message(text: str) -> ParseResult:
         )
     
     # Get original case values
-    for key in ["client", "teacher"]:
+    for key in ["client", "teacher", "to"]:
         pattern, _ = patterns[key]
         match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
         if match:
