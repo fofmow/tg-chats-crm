@@ -173,7 +173,7 @@ def parse_payout_message(text: str) -> ParseResult:
         )
     
     # Get original case values
-    for key in ["category", "recipient"]:
+    for key in ["category", "to"]:
         pattern, _ = patterns[key]
         match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
         if match:
@@ -185,7 +185,7 @@ def parse_payout_message(text: str) -> ParseResult:
             "date": parsed_date,
             "amount": parsed_amount,
             "category": result["category"],
-            "recipient": result["recipient"],
+            "recipient": result["to"],
         }
     )
 
