@@ -213,6 +213,90 @@ async def add_success_reaction(message: Message):
         print(ex)
 
 
+async def add_cancel_reaction(message: Message):
+    """Add cancel reaction to the original message."""
+    try:
+        await message.react([ReactionTypeEmoji(emoji="👎")])
+    except Exception as ex:
+        # Reaction might fail if bot doesn't have permission
+        print(ex)
+
+
+def is_cancel_command(text: str) -> bool:
+    """Check if message is a cancel command."""
+    return text.strip().lower() == "cancel"
+
+
+@router.message(
+    F.chat.id.in_([settings.ru_payin_chat_id, settings.eng_payin_chat_id]),
+    F.reply_to_message,
+    F.text,
+)
+async def handle_payin_cancel(message: Message, db: Database):
+    """Handle cancel command for pay-in chats."""
+    if not message.text or not is_cancel_command(message.text):
+        return
+    
+    if not message.reply_to_message:
+        return
+    
+    reply_message_id = message.reply_to_message.message_id
+    chat_id = message.chat.id
+    
+    async with db.session_factory() as session:
+        deleted = await PaymentInCRUD.delete_by_message_id(
+            session=session,
+            message_id=reply_message_id,
+            chat_id=chat_id,
+        )
+    
+    if deleted:
+        await add_cancel_reaction(message.reply_to_message)
+        await message.reply(
+            f"✅ Transaction cancelled:\n"
+            f"Amount: {deleted.amount:,.2f}\n"
+            f"Client: {deleted.client}\n"
+            f"Teacher: {deleted.teacher}"
+        )
+    else:
+        await message.reply("❌ Transaction not found in database")
+
+
+@router.message(
+    F.chat.id == settings.payout_chat_id,
+    F.reply_to_message,
+    F.text,
+)
+async def handle_payout_cancel(message: Message, db: Database):
+    """Handle cancel command for pay-out chat."""
+    if not message.text or not is_cancel_command(message.text):
+        return
+    
+    if not message.reply_to_message:
+        return
+    
+    reply_message_id = message.reply_to_message.message_id
+    chat_id = message.chat.id
+    
+    async with db.session_factory() as session:
+        deleted = await PaymentOutCRUD.delete_by_message_id(
+            session=session,
+            message_id=reply_message_id,
+            chat_id=chat_id,
+        )
+    
+    if deleted:
+        await add_cancel_reaction(message.reply_to_message)
+        await message.reply(
+            f"✅ Transaction cancelled:\n"
+            f"Amount: {deleted.amount:,.2f}\n"
+            f"Category: {deleted.category}\n"
+            f"Recipient: {deleted.recipient}"
+        )
+    else:
+        await message.reply("❌ Transaction not found in database")
+
+
 @router.message(F.chat.id == settings.ru_payin_chat_id)
 async def handle_ru_payin(message: Message, db: Database):
     """Handle messages from RU pay-in chat."""

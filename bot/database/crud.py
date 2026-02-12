@@ -121,6 +121,24 @@ class PaymentInCRUD:
         )
         return list(result.scalars().all())
 
+    @staticmethod
+    async def delete_by_message_id(
+        session: AsyncSession,
+        message_id: int,
+        chat_id: int,
+    ) -> PaymentIn | None:
+        """Delete incoming payment by message_id and chat_id. Returns deleted payment or None."""
+        result = await session.execute(
+            select(PaymentIn)
+            .where(PaymentIn.message_id == message_id)
+            .where(PaymentIn.chat_id == chat_id)
+        )
+        payment = result.scalar_one_or_none()
+        if payment:
+            await session.delete(payment)
+            await session.commit()
+        return payment
+
 
 class PaymentOutCRUD:
     """CRUD operations for PaymentOut."""
@@ -234,3 +252,21 @@ class PaymentOutCRUD:
             .order_by(PaymentOut.date.desc(), PaymentOut.created_at.desc())
         )
         return list(result.scalars().all())
+
+    @staticmethod
+    async def delete_by_message_id(
+        session: AsyncSession,
+        message_id: int,
+        chat_id: int,
+    ) -> PaymentOut | None:
+        """Delete outgoing payment by message_id and chat_id. Returns deleted payment or None."""
+        result = await session.execute(
+            select(PaymentOut)
+            .where(PaymentOut.message_id == message_id)
+            .where(PaymentOut.chat_id == chat_id)
+        )
+        payment = result.scalar_one_or_none()
+        if payment:
+            await session.delete(payment)
+            await session.commit()
+        return payment
