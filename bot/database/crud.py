@@ -52,9 +52,33 @@ class PaymentInCRUD:
         return result.scalar_one()
 
     @staticmethod
+    async def get_total_amount_current_month(session: AsyncSession) -> float:
+        """Get total amount of incoming payments for the current month."""
+        today = date.today()
+        start_date = date(today.year, today.month, 1)
+        result = await session.execute(
+            select(func.coalesce(func.sum(PaymentIn.amount), 0))
+            .where(PaymentIn.date >= start_date)
+            .where(PaymentIn.date <= today)
+        )
+        return result.scalar_one()
+
+    @staticmethod
     async def get_count(session: AsyncSession) -> int:
         """Get count of all incoming payments."""
         result = await session.execute(select(func.count(PaymentIn.id)))
+        return result.scalar_one()
+
+    @staticmethod
+    async def get_count_current_month(session: AsyncSession) -> int:
+        """Get count of incoming payments for the current month."""
+        today = date.today()
+        start_date = date(today.year, today.month, 1)
+        result = await session.execute(
+            select(func.count(PaymentIn.id))
+            .where(PaymentIn.date >= start_date)
+            .where(PaymentIn.date <= today)
+        )
         return result.scalar_one()
 
     @staticmethod
@@ -184,9 +208,33 @@ class PaymentOutCRUD:
         return result.scalar_one()
 
     @staticmethod
+    async def get_total_amount_current_month(session: AsyncSession) -> float:
+        """Get total amount of outgoing payments for the current month."""
+        today = date.today()
+        start_date = date(today.year, today.month, 1)
+        result = await session.execute(
+            select(func.coalesce(func.sum(PaymentOut.amount), 0))
+            .where(PaymentOut.date >= start_date)
+            .where(PaymentOut.date <= today)
+        )
+        return result.scalar_one()
+
+    @staticmethod
     async def get_count(session: AsyncSession) -> int:
         """Get count of all outgoing payments."""
         result = await session.execute(select(func.count(PaymentOut.id)))
+        return result.scalar_one()
+
+    @staticmethod
+    async def get_count_current_month(session: AsyncSession) -> int:
+        """Get count of outgoing payments for the current month."""
+        today = date.today()
+        start_date = date(today.year, today.month, 1)
+        result = await session.execute(
+            select(func.count(PaymentOut.id))
+            .where(PaymentOut.date >= start_date)
+            .where(PaymentOut.date <= today)
+        )
         return result.scalar_one()
 
     @staticmethod

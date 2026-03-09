@@ -37,11 +37,11 @@ class ReportsService:
     
     @staticmethod
     async def get_debit_credit(session: AsyncSession) -> DebitCreditReport:
-        """Get debit/credit report."""
-        total_incoming = await PaymentInCRUD.get_total_amount(session)
-        total_outgoing = await PaymentOutCRUD.get_total_amount(session)
-        incoming_count = await PaymentInCRUD.get_count(session)
-        outgoing_count = await PaymentOutCRUD.get_count(session)
+        """Get debit/credit report for the current month."""
+        total_incoming = await PaymentInCRUD.get_total_amount_current_month(session)
+        total_outgoing = await PaymentOutCRUD.get_total_amount_current_month(session)
+        incoming_count = await PaymentInCRUD.get_count_current_month(session)
+        outgoing_count = await PaymentOutCRUD.get_count_current_month(session)
         
         return DebitCreditReport(
             total_incoming=total_incoming,

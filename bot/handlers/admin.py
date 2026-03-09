@@ -62,8 +62,11 @@ async def callback_debit_credit(callback: CallbackQuery, db: Database):
     async with db.session_factory() as session:
         report = await ReportsService.get_debit_credit(session)
 
+    today = date.today()
+    month_name = today.strftime("%B %Y")
+
     text = (
-        "📊 <b>Debit/Credit</b>\n\n"
+        f"📊 <b>Debit/Credit — {month_name}</b>\n\n"
         f"📥 <b>Incoming (debit):</b>\n"
         f"   Amount: {report.total_incoming:,.2f}\n"
         f"   Count: {report.incoming_count}\n\n"
