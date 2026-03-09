@@ -94,10 +94,13 @@ async def callback_balance(callback: CallbackQuery, db: Database):
     async with db.session_factory() as session:
         report = await ReportsService.get_balance(session)
 
+    today = date.today()
+    month_name = today.strftime("%B %Y")
+
     balance_emoji = "📈" if report.balance >= 0 else "📉"
 
     text = (
-        "💰 <b>Current Balance</b>\n\n"
+        f"💰 <b>Current Balance — {month_name}</b>\n\n"
         f"📥 Incoming: {report.total_incoming:,.2f}\n"
         f"📤 Outgoing: {report.total_outgoing:,.2f}\n\n"
         f"{balance_emoji} <b>Balance: {report.balance:,.2f}</b>"

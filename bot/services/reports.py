@@ -52,9 +52,9 @@ class ReportsService:
     
     @staticmethod
     async def get_balance(session: AsyncSession) -> BalanceReport:
-        """Get current balance."""
-        total_incoming = await PaymentInCRUD.get_total_amount(session)
-        total_outgoing = await PaymentOutCRUD.get_total_amount(session)
+        """Get current balance for current month."""
+        total_incoming = await PaymentInCRUD.get_total_amount_current_month(session)
+        total_outgoing = await PaymentOutCRUD.get_total_amount_current_month(session)
         
         return BalanceReport(
             total_incoming=total_incoming,
