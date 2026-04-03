@@ -5,6 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import PaymentIn, PaymentOut
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class PaymentInCRUD:
     """CRUD operations for PaymentIn."""
@@ -19,8 +23,20 @@ class PaymentInCRUD:
         chat_type: str,
         message_id: int,
         chat_id: int,
-    ) -> PaymentIn:
-        """Create a new incoming payment."""
+    ) -> PaymentIn | None:
+        """Create a new incoming payment. Returns None if duplicate (same message_id + chat_id)."""
+        # Check for duplicate by message_id + chat_id
+        existing = await session.execute(
+            select(PaymentIn)
+            .where(PaymentIn.message_id == message_id)
+            .where(PaymentIn.chat_id == chat_id)
+        )
+        if existing.scalar_one_or_none():
+            logger.warning(
+                f"Duplicate PaymentIn skipped: message_id={message_id}, chat_id={chat_id}"
+            )
+            return None
+
         payment = PaymentIn(
             date=payment_date,
             amount=amount,
@@ -176,8 +192,20 @@ class PaymentOutCRUD:
         recipient: str,
         message_id: int,
         chat_id: int,
-    ) -> PaymentOut:
-        """Create a new outgoing payment."""
+    ) -> PaymentOut | None:
+        """Create a new outgoing payment. Returns None if duplicate (same message_id + chat_id)."""
+        # Check for duplicate by message_id + chat_id
+        existing = await session.execute(
+            select(PaymentOut)
+            .where(PaymentOut.message_id == message_id)
+            .where(PaymentOut.chat_id == chat_id)
+        )
+        if existing.scalar_one_or_none():
+            logger.warning(
+                f"Duplicate PaymentOut skipped: message_id={message_id}, chat_id={chat_id}"
+            )
+            return None
+
         payment = PaymentOut(
             date=payment_date,
             amount=amount,

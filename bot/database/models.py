@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from enum import Enum
 
-from sqlalchemy import BigInteger, Date, DateTime, Float, String, func
+from sqlalchemy import BigInteger, Date, DateTime, Float, String, UniqueConstraint, func
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -19,6 +19,9 @@ class PaymentIn(Base):
     """Incoming payments (pay-in)."""
 
     __tablename__ = "payments_in"
+    __table_args__ = (
+        UniqueConstraint("message_id", "chat_id", name="uq_payments_in_message_chat"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     date: Mapped[date] = mapped_column(Date, nullable=False)
@@ -40,6 +43,9 @@ class PaymentOut(Base):
     """Outgoing payments (pay-out)."""
 
     __tablename__ = "payments_out"
+    __table_args__ = (
+        UniqueConstraint("message_id", "chat_id", name="uq_payments_out_message_chat"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     date: Mapped[date] = mapped_column(Date, nullable=False)

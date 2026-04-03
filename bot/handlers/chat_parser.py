@@ -314,7 +314,7 @@ async def handle_ru_payin(message: Message, db: Database):
         return
     
     async with db.session_factory() as session:
-        await PaymentInCRUD.create(
+        payment = await PaymentInCRUD.create(
             session=session,
             payment_date=parsed.data["date"],
             amount=parsed.data["amount"],
@@ -325,7 +325,8 @@ async def handle_ru_payin(message: Message, db: Database):
             chat_id=message.chat.id,
         )
     
-    await add_success_reaction(message)
+    if payment:
+        await add_success_reaction(message)
 
 
 @router.message(F.chat.id == settings.eng_payin_chat_id)
@@ -344,7 +345,7 @@ async def handle_eng_payin(message: Message, db: Database):
         return
     
     async with db.session_factory() as session:
-        await PaymentInCRUD.create(
+        payment = await PaymentInCRUD.create(
             session=session,
             payment_date=parsed.data["date"],
             amount=parsed.data["amount"],
@@ -355,7 +356,8 @@ async def handle_eng_payin(message: Message, db: Database):
             chat_id=message.chat.id,
         )
     
-    await add_success_reaction(message)
+    if payment:
+        await add_success_reaction(message)
 
 
 @router.message(F.chat.id == settings.payout_chat_id)
@@ -374,7 +376,7 @@ async def handle_payout(message: Message, db: Database):
         return
     
     async with db.session_factory() as session:
-        await PaymentOutCRUD.create(
+        payment = await PaymentOutCRUD.create(
             session=session,
             payment_date=parsed.data["date"],
             amount=parsed.data["amount"],
@@ -384,4 +386,5 @@ async def handle_payout(message: Message, db: Database):
             chat_id=message.chat.id,
         )
     
-    await add_success_reaction(message)
+    if payment:
+        await add_success_reaction(message)
