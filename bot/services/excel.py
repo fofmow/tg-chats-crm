@@ -292,7 +292,7 @@ class ExcelService:
     @classmethod
     def _write_teachers_breakdown(cls, ws, incoming: list[PaymentIn]):
         """Write breakdown by teacher."""
-        headers = ["Teacher", "Count", "Amount", "Average", "% of Total"]
+        headers = ["Teacher", "Count", "Amount", "Average", "% of Total", "First Date", "Last Date"]
         cls._write_headers(ws, headers)
         
         if not incoming:
@@ -318,6 +318,9 @@ class ExcelService:
             total = sum(p.amount for p in payments)
             avg = total / len(payments)
             pct = (total / total_amount * 100) if total_amount > 0 else 0
+            dates = [p.date for p in payments]
+            first_date = min(dates)
+            last_date = max(dates)
             
             ws.cell(row=row, column=1, value=teacher).border = cls.BORDER
             ws.cell(row=row, column=2, value=len(payments)).border = cls.BORDER
@@ -326,6 +329,8 @@ class ExcelService:
             ws.cell(row=row, column=4, value=avg).border = cls.BORDER
             ws.cell(row=row, column=4).number_format = '#,##0.00'
             ws.cell(row=row, column=5, value=f"{pct:.1f}%").border = cls.BORDER
+            ws.cell(row=row, column=6, value=first_date.strftime("%d.%m.%Y")).border = cls.BORDER
+            ws.cell(row=row, column=7, value=last_date.strftime("%d.%m.%Y")).border = cls.BORDER
             row += 1
         
         # Total
@@ -335,14 +340,14 @@ class ExcelService:
         ws.cell(row=row, column=3, value=total_amount).font = Font(bold=True)
         ws.cell(row=row, column=3).number_format = '#,##0.00'
         
-        widths = [25, 12, 15, 15, 12]
+        widths = [25, 12, 15, 15, 12, 14, 14]
         for col, width in enumerate(widths, start=1):
             ws.column_dimensions[get_column_letter(col)].width = width
     
     @classmethod
     def _write_categories_breakdown(cls, ws, outgoing: list[PaymentOut]):
         """Write breakdown by category."""
-        headers = ["Category", "Count", "Amount", "Average", "% of Total"]
+        headers = ["Category", "Count", "Amount", "Average", "% of Total", "First Date", "Last Date"]
         cls._write_headers(ws, headers)
         
         if not outgoing:
@@ -368,6 +373,9 @@ class ExcelService:
             total = sum(p.amount for p in payments)
             avg = total / len(payments)
             pct = (total / total_amount * 100) if total_amount > 0 else 0
+            dates = [p.date for p in payments]
+            first_date = min(dates)
+            last_date = max(dates)
             
             ws.cell(row=row, column=1, value=category).border = cls.BORDER
             ws.cell(row=row, column=2, value=len(payments)).border = cls.BORDER
@@ -376,6 +384,8 @@ class ExcelService:
             ws.cell(row=row, column=4, value=avg).border = cls.BORDER
             ws.cell(row=row, column=4).number_format = '#,##0.00'
             ws.cell(row=row, column=5, value=f"{pct:.1f}%").border = cls.BORDER
+            ws.cell(row=row, column=6, value=first_date.strftime("%d.%m.%Y")).border = cls.BORDER
+            ws.cell(row=row, column=7, value=last_date.strftime("%d.%m.%Y")).border = cls.BORDER
             row += 1
         
         # Total
@@ -385,7 +395,7 @@ class ExcelService:
         ws.cell(row=row, column=3, value=total_amount).font = Font(bold=True)
         ws.cell(row=row, column=3).number_format = '#,##0.00'
         
-        widths = [25, 12, 15, 15, 12]
+        widths = [25, 12, 15, 15, 12, 14, 14]
         for col, width in enumerate(widths, start=1):
             ws.column_dimensions[get_column_letter(col)].width = width
     
